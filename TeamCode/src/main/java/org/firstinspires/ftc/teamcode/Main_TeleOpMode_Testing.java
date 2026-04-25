@@ -113,7 +113,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             } else {
                 flipper.setPosition(0.0);
             }
-            double fPos = flipper.getPosition(); //check flipper position
+            double flipperPos = flipper.getPosition(); //check flipper position
 
             //get odometry data
             odometryComputer.update(); // Crucial: Refresh sensor data
@@ -138,7 +138,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             telemetry.addData("X Position", X); //positive = forward
             telemetry.addData("Y Position", Y); //positive = strafe left
             telemetry.addData("Heading Deg", H); //positive = counterclockwise
-            telemetry.addData("Flipper Position:", flipper.getPosition());
+            telemetry.addData("Flipper Position:", flipperPos);
             telemetry.update();
         }
     }
