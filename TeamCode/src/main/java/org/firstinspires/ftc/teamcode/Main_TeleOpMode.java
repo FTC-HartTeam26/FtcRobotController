@@ -62,57 +62,55 @@ public class Main_TeleOpMode extends LinearOpMode {
     odometryComputer.resetPosAndIMU(); // Reset position to (0,0) and heading to 0
 
     waitForStart();
-    if (opModeIsActive()) {
-      while (opModeIsActive()) {
-        //Drive
-        front_right.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
-        back_right.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
-        front_left.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
-        back_left.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
+    while (opModeIsActive()) {
+      //Drive
+      front_right.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
+      back_right.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
+      front_left.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
+      back_left.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
 
-        //Shooting Motors
-        if (gamepad1.a) {
-          shooter_right.setPower(1);
-          shooter_left.setPower(-1);
-        } else {
-          shooter_right.setPower(0);
-          shooter_left.setPower(0);
-        }
-
-        //Intake Motors
-        if (gamepad1.b) {
-          intake.setPower(1);
-          hopper.setPower(-.15);
-        } else {
-          intake.setPower(0);
-          hopper.setPower(0);
-        }
-
-        //get odometry data
-        odometryComputer.update(); // Crucial: Refresh sensor data
-        Pose2D pos = odometryComputer.getPosition();
-        double X = pos.getX(DistanceUnit.MM);
-        double Y = pos.getY(DistanceUnit.MM);
-        double H = pos.getHeading(AngleUnit.DEGREES);
-        //double Vel_X = odometryComputer.getVelX(DistanceUnit.MM); //uncomment to use velocity
-        //double Vel_Y = odometryComputer.getVelY(DistanceUnit.MM);
-        //double Vel_H = odometryComputer.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
-
-        //Calculate loop frequency, large number = fast = good
-        double newTime = getRuntime();
-        double loopTime = newTime-oldTime;
-        double frequency = 1/loopTime;
-        oldTime = newTime;
-
-        //telemetry outputs
-        telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
-        telemetry.addData("Pinpoint Status", odometryComputer.getDeviceStatus());
-        telemetry.addData("Pinpoint Frequency", odometryComputer.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
-        telemetry.addData("X Position", X); //positive = forward
-        telemetry.addData("Y Position", Y); //positive = strafe left
-        telemetry.addData("Heading Deg", H); //positive = counterclockwise
-        telemetry.update();
+      //Shooting Motors
+      if (gamepad1.a) {
+        shooter_right.setPower(1);
+        shooter_left.setPower(-1);
+      } else {
+        shooter_right.setPower(0);
+        shooter_left.setPower(0);
       }
+
+      //Intake Motors
+      if (gamepad1.b) {
+        intake.setPower(1);
+        hopper.setPower(-.15);
+      } else {
+        intake.setPower(0);
+        hopper.setPower(0);
+      }
+
+      //get odometry data
+      odometryComputer.update(); // Crucial: Refresh sensor data
+      Pose2D pos = odometryComputer.getPosition();
+      double X = pos.getX(DistanceUnit.MM);
+      double Y = pos.getY(DistanceUnit.MM);
+      double H = pos.getHeading(AngleUnit.DEGREES);
+      //double Vel_X = odometryComputer.getVelX(DistanceUnit.MM); //uncomment to use velocity
+      //double Vel_Y = odometryComputer.getVelY(DistanceUnit.MM);
+      //double Vel_H = odometryComputer.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
+
+      //Calculate loop frequency, large number = fast = good
+      double newTime = getRuntime();
+      double loopTime = newTime-oldTime;
+      double frequency = 1/loopTime;
+      oldTime = newTime;
+
+      //telemetry outputs
+      telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
+      telemetry.addData("Pinpoint Status", odometryComputer.getDeviceStatus());
+      telemetry.addData("Pinpoint Frequency", odometryComputer.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
+      telemetry.addData("X Position", X); //positive = forward
+      telemetry.addData("Y Position", Y); //positive = strafe left
+      telemetry.addData("Heading Deg", H); //positive = counterclockwise
+      telemetry.update();
     }
   }
 }
