@@ -71,7 +71,8 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
         // Configure Odometry Pods (Adjust FWD/REV based on your bot)
         odometryComputer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odometryComputer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        // arg1 is X-encoder, arg2 is Y-encoder
+        odometryComputer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
         // Define offsets (distance from center of rotation)
         odometryComputer.setOffsets(10.0, -15.0, DistanceUnit.MM);
@@ -109,9 +110,9 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
             // Lift ball into Shooter using Flipper
             if (gamepad1.dpad_up) {
-                flipper.setPosition(1.0);
-            } else {
                 flipper.setPosition(0.0);
+            } else {
+                flipper.setPosition(1.0);
             }
             double flipperPos = flipper.getPosition(); //check flipper position
 
