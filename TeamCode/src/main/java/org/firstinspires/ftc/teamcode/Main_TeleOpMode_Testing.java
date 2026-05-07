@@ -72,12 +72,13 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         // Configure Odometry Pods (Adjust FWD/REV based on your bot)
         odometryComputer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         // arg1 is X-encoder, arg2 is Y-encoder
-        odometryComputer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odometryComputer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         // Define offsets (distance from center of rotation)
         odometryComputer.setOffsets(10.0, -15.0, DistanceUnit.MM);
         odometryComputer.setYawScalar(1.0); // Tune if turning is inaccurate
         odometryComputer.resetPosAndIMU(); // Reset position to (0,0) and heading to 0
+        boolean lastA = false;
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -89,6 +90,13 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             back_right.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
             front_left.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
             back_left.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
+
+            //resetting odometry positions and heading
+            boolean currentA = gamepad1.dpad_down;
+            if (currentA && !lastA) {
+                odometryComputer.resetPosAndIMU();
+            }
+            lastA = currentA;
 
             //Turn on Shooting Motors
             if (gamepad1.a) {
