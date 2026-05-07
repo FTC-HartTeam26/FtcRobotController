@@ -78,7 +78,12 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         odometryComputer.setOffsets(10.0, -15.0, DistanceUnit.MM);
         odometryComputer.setYawScalar(1.0); // Tune if turning is inaccurate
         odometryComputer.resetPosAndIMU(); // Reset position to (0,0) and heading to 0
-        boolean lastA = false;
+        boolean lastA = false; //used to identify when dpad down button is pressed
+
+        // Initialize the hopper encoder
+        DcMotor hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
+        // hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
+        hopper_encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -142,12 +147,13 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
             //telemetry outputs
             telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
-            telemetry.addData("Pinpoint Status", odometryComputer.getDeviceStatus());
-            telemetry.addData("Pinpoint Frequency", odometryComputer.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
+            //telemetry.addData("Pinpoint Status", odometryComputer.getDeviceStatus());
+            //telemetry.addData("Pinpoint Frequency", odometryComputer.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
             telemetry.addData("X Position", X); //positive = forward
             telemetry.addData("Y Position", Y); //positive = strafe left
             telemetry.addData("Heading Deg", H); //positive = counterclockwise
             telemetry.addData("Flipper Position:", flipperPos);
+            telemetry.addData("Hopper Encoder:", hopper_encoder.getCurrentPosition());
             telemetry.update();
         }
     }
