@@ -1,47 +1,13 @@
-/* Copyright (c) 2017 FIRST. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted (subject to the limitations in the disclaimer below) provided that
- * the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list
- * of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright notice, this
- * list of conditions and the following disclaimer in the documentation and/or
- * other materials provided with the distribution.
- *
- * Neither the name of FIRST nor the names of its contributors may be used to endorse or
- * promote products derived from this software without specific prior written permission.
- *
- * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
- * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package org.firstinspires.ftc.teamcode;
 
-//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-//import com.qualcomm.robotcore.util.ElapsedTime;
-//import com.qualcomm.robotcore.util.Range;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-
 
 @TeleOp(name="Testing Hardware v1", group="TeleOpModes")
 public class Main_TeleOpMode_Testing extends LinearOpMode {
@@ -64,6 +30,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
         //sensor setup
         GoBildaPinpointDriver odometryComputer = hardwareMap.get(GoBildaPinpointDriver.class,"odometry");
+        DcMotor hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
 
         //set up drive motor directions
         back_right.setDirection(DcMotor.Direction.REVERSE);
@@ -81,15 +48,49 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         boolean lastA = false; //used to identify when dpad down button is pressed
 
         // Initialize the hopper encoder
-        DcMotor hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
-        // hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
+        hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
         hopper_encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
+        final double TICKS_PER_REV = 8192.0;
+        final double ERROR_MARGIN = TICKS_PER_REV /100; // Set to how accurate you want the Error Margin to be when spinning hopper.
+        double pos1 = TICKS_PER_REV / 3 * 0;
+        double pos2 = TICKS_PER_REV / 3 * 1;
+        double pos3 = TICKS_PER_REV / 3 * 2;
 
         // Wait for the game to start (driver presses START)
+        telemetry.addData("Init:","Press Start");
+        telemetry.update();
         waitForStart();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
+            //get current hopper position (relative to a full rotation)
+            double currPos = hopper_encoder.getCurrentPosition() % TICKS_PER_REV;
+            boolean ball_in_position = false; //reset ball in position variable
+
+            //calculate how many ticks away we are from each position
+            double check_pos2 = Math.abs(currPos - pos2); //using absolute value to make checking error margin easier
+            double check_pos3 = Math.abs(currPos - pos3);
+            //position 1 is unique because currPos goes from max ticks back to zero
+                //this means checking for the margin of error is tricky
+                //to fix this we reverse the check position halfway through the rotation
+            double currPos1;
+            if (currPos < TICKS_PER_REV / 2) {
+                currPos1 = currPos;
+            } else {
+                currPos1 = TICKS_PER_REV - currPos;
+            }
+            double check_pos1 = Math.abs(currPos1 - pos1);
+
+            //check if ball is in any of the shooting positions, set ball_in_pos accordingly
+            if (check_pos1 <= ERROR_MARGIN) {
+                ball_in_position = true;
+            } else if  (check_pos2 <= ERROR_MARGIN) {
+                ball_in_position = true;
+            } else if (check_pos3 <= ERROR_MARGIN) {
+                ball_in_position = true;
+            }
+
             //Drive
             front_right.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
             back_right.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
@@ -107,6 +108,11 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             if (gamepad1.a) {
                 shooter_right.setPower(1);
                 shooter_left.setPower(-1);
+                if (!ball_in_position) {
+                    hopper.setPower(-0.4);
+                } else {
+                    hopper.setPower(0);
+                }
             } else {
                 shooter_right.setPower(0);
                 shooter_left.setPower(0);
@@ -154,6 +160,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             telemetry.addData("Heading Deg", H); //positive = counterclockwise
             telemetry.addData("Flipper Position:", flipperPos);
             telemetry.addData("Hopper Encoder:", hopper_encoder.getCurrentPosition());
+            telemetry.addData("Ball in Pos", ball_in_position);
             telemetry.update();
         }
     }
