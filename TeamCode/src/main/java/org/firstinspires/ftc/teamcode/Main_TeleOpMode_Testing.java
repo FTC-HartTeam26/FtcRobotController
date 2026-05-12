@@ -49,7 +49,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
         // Initialize the hopper encoder
         hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
-        hopper_encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
+        hopper_encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
         final double TICKS_PER_REV = 8192.0;
         final double ERROR_MARGIN = TICKS_PER_REV /100; // Set to how accurate you want the Error Margin to be when spinning hopper.
         double pos1 = TICKS_PER_REV / 3 * 0;
@@ -85,7 +85,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             //check if ball is in any of the shooting positions, set ball_in_pos accordingly
             if (check_pos1 <= ERROR_MARGIN) {
                 ball_in_position = true;
-            } else if  (check_pos2 <= ERROR_MARGIN) {
+            } else if (check_pos2 <= ERROR_MARGIN) {
                 ball_in_position = true;
             } else if (check_pos3 <= ERROR_MARGIN) {
                 ball_in_position = true;
