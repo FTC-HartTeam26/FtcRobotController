@@ -158,11 +158,25 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
     }
 
     private void driveRobot() {
-        //FIXME: need to normalize drive motors so they can't exceed 1.0
-        front_right.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
-        back_right.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) + gamepad1.right_stick_x * 0.5);
-        front_left.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
-        back_left.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
+        double drive = gamepad1.left_stick_y * 0.5;
+        double strafe = gamepad1.left_stick_x * 0.5;
+        double turn = gamepad1.right_stick_x * 0.5;
+
+        double fr = drive + strafe + turn;
+        double br = drive - strafe + turn;
+        double fl = drive - strafe - turn;
+        double bl = drive + strafe - turn;
+
+        //max is used to normalize power to a max of 1.0
+        double max = Math.max(1.0, Math.max(
+                Math.max(Math.abs(fr), Math.abs(br)),
+                Math.max(Math.abs(fl), Math.abs(bl))
+        ));
+
+        front_right.setPower(fr / max);
+        back_right.setPower(br / max);
+        front_left.setPower(fl / max);
+        back_left.setPower(bl / max);
     }
 
     private boolean resetOdometry(boolean lastDownArrow) {
