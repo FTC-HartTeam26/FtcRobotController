@@ -76,7 +76,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             updateLoopFrequency();
 
             //set hopper motor power if required by shooter or intake
-            hopper.setPower(Math.max(hp_intake, hp_shooter));
+            hopper.setPower(Math.min(hp_intake, hp_shooter));
             telemetry.update();
         }
     }
@@ -222,9 +222,9 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
     private void controlFlipper() {
         // Lift ball into Shooter using Flipper
         if (gamepad1.dpad_up) {
-            flipper.setPosition(0.0);
+            flipper.setPosition(0.1);
         } else {
-            flipper.setPosition(1.0);
+            flipper.setPosition(0.7);
         }
         double flipperPos = flipper.getPosition(); //check flipper position
         telemetry.addData("Flipper Position:", flipperPos);
