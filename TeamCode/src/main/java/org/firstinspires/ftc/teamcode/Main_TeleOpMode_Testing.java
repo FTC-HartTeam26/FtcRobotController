@@ -58,11 +58,12 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             down_already_pressed =  resetOdometry(down_already_pressed);
 
             //this method sets shooter motors power and returns hopper power
-            double hopperPower = 0;
-            hopperPower = shootBall(ball_in_position, hopperPower);
+            double hp_shooter; //hopper power for aligning ball in shooter
+            hp_shooter = shootBall(ball_in_position);
 
             //this method sets intake motors and returns hopper power
-            hopperPower =  controlIntake(hopperPower);
+            double hp_intake; //hopper power for ball intake
+            hp_intake =  controlIntake();
 
             //this method raises flipper if up arrow is pressed
             controlFlipper();
@@ -74,7 +75,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             updateLoopFrequency();
 
             //set hopper motor power if required by shooter or intake
-            hopper.setPower(hopperPower);
+            hopper.setPower(Math.max(hp_intake, hp_shooter));
             telemetry.update();
         }
     }
@@ -189,7 +190,8 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         return lastDownArrow;
     }
 
-    private double shootBall(boolean ball_is_ready, double  hp) {
+    private double shootBall(boolean ball_is_ready) {
+        double hp = 0; //hopper power
         if (gamepad1.a) {
             shooter_right.setPower(1); //turn on shooter motors
             shooter_left.setPower(-1);
@@ -203,7 +205,8 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         return hp;
     }
 
-    private double controlIntake(double hp) {
+    private double controlIntake() {
+        double hp = 0; //hopper power
         if (gamepad1.b) {
             intake.setPower(1); //turn on intake motor
             hp = -0.15; //set hopper motor power (negative spins clockwise)
@@ -234,6 +237,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         telemetry.addData("Y Position",Y); //positive = strafe left
         telemetry.addData("Heading Deg",H); //positive = counterclockwise
     }
+
     private void updateLoopFrequency () {
         //Calculate loop frequency, large number = fast = good
         double newTime = getRuntime();
