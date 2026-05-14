@@ -55,10 +55,11 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             driveRobot();
 
             //this method resets odometry readings when down arrow is pressed
+            //variable used to make sure the reset only happens once per button press
             down_already_pressed =  resetOdometry(down_already_pressed);
 
             //this method sets shooter motors power and returns hopper power
-            double hp_shooter; //hopper power for aligning ball in shooter
+            double hp_shooter; //hopper power for aligning ball to flipper
             hp_shooter = shootBall(ball_in_position);
 
             //this method sets intake motors and returns hopper power
@@ -159,16 +160,18 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
     }
 
     private void driveRobot() {
+        //limit motors to half speed
         double drive = gamepad1.left_stick_y * 0.5;
         double strafe = gamepad1.left_stick_x * 0.5;
         double turn = gamepad1.right_stick_x * 0.5;
 
+        //configuration for mecanum wheels is the sum of all inputs (see mecanum diagram)
         double fr = drive + strafe + turn;
         double br = drive - strafe + turn;
         double fl = drive - strafe - turn;
         double bl = drive + strafe - turn;
 
-        //max is used to normalize power to a max of 1.0
+        //max is used to normalize motor power to a max of 1.0
         double max = Math.max(1.0, Math.max(
                 Math.max(Math.abs(fr), Math.abs(br)),
                 Math.max(Math.abs(fl), Math.abs(bl))
