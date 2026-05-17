@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.Color;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -8,21 +9,28 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+
 
 @TeleOp(name="Testing Hardware v1", group="TeleOpModes")
 public class Main_TeleOpMode_Testing extends LinearOpMode {
     //Declare class-level objects and variables
-    DcMotor hopper_encoder;
-    CRServo hopper;
-    Servo flipper;
-    DcMotor shooter_left;
-    DcMotor shooter_right;
-    DcMotor intake;
-    DcMotor back_left;
-    DcMotor front_left;
-    DcMotor front_right;
-    DcMotor back_right;
-    GoBildaPinpointDriver odometryComputer;
+    private DcMotor hopper_encoder;
+    private CRServo hopper;
+    private Servo flipper;
+    private DcMotor shooter_left;
+    private DcMotor shooter_right;
+    private DcMotor intake;
+    private DcMotor back_left;
+    private DcMotor front_left;
+    private DcMotor front_right;
+    private DcMotor back_right;
+    private GoBildaPinpointDriver odometryComputer;
+    private NormalizedColorSensor colorSensor;
+    private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
+    private DistanceSensor distanceSensor;
     double oldTime = 0; //used to calculate loop frequency
 
     //This is the main method. It runs when you press INIT on the Driver Hub
@@ -33,6 +41,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         initializeHardware();
         configureDriveMotors();
         configureOdometry();
+        initializeHopper(); //FIXME: WILL NEED TO SET CHECK VALUES
         configureHopperEncoder();
 
         // variables that need to persist for multiple loop cycles
@@ -46,6 +55,15 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         // Main loop
         // this is what runs after you press Start, doesn't stop looping until you press Stop
         while (opModeIsActive()) {
+
+            //this method returns the results of the ball color sensor
+            String ballColor;
+            ballColor = getBallColor(colorSensor);
+
+            //this method returns the value of the test color sensor
+            //delete this section after testing is complete
+            String ballColor_Test;
+            ballColor_Test = getBallColor(colorSensorTest);
 
             //this method returns whether the ball is in shooting position
             boolean ball_in_position = false; //reset ball in position variable
@@ -77,6 +95,8 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
             //set hopper motor power if required by shooter or intake
             hopper.setPower(Math.min(hp_intake, hp_shooter));
+            telemetry.addData("Ball Color", ballColor);
+            telemetry.addData("Test Sensor", ballColor_Test);
             telemetry.update();
         }
     }
@@ -94,6 +114,10 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         flipper = hardwareMap.get(Servo.class, "flipper");
         odometryComputer = hardwareMap.get(GoBildaPinpointDriver.class, "odometry");
         hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "ball_color_sensor");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "ball_color_sensor");
+        //FIXME: DELETE THE TEST SENSOR WHEN DONE TESTING
+        colorSensorTest = hardwareMap.get(NormalizedColorSensor.class, "test_color_sensor");
     }
 
     private void configureDriveMotors() {
@@ -117,6 +141,18 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         // Initialize the hopper encoder
         hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
         hopper_encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
+    }
+
+    private void initializeHopper() {
+        double distanceCm = distanceSensor.getDistance(DistanceUnit.CM);
+        int i = 0;
+        //FIXME: SET DISTANCE TO PROPER VALUE AFTER TESTING
+        while (distanceCm > 2 && i <= 200) {
+            hopper.setPower(-0.08);
+            telemetry.addData("HopperDistCM:", distanceCm);
+            telemetry.update();
+            i++;
+        };
     }
 
     //Method for controlling the robot during the main loop
@@ -224,7 +260,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         if (gamepad1.dpad_up) {
             flipper.setPosition(0.1);
         } else {
-            flipper.setPosition(0.7);
+            flipper.setPosition(0.6);
         }
         double flipperPos = flipper.getPosition(); //check flipper position
         telemetry.addData("Flipper Position:", flipperPos);
@@ -248,6 +284,40 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         double frequency = (loopTime == 0) ? 0 : 1 / loopTime;
         oldTime = newTime;
         telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
+    }
+
+    private String getBallColor(NormalizedColorSensor cSensor) {
+        //this method returns ball color green, purple or unknown
+        NormalizedRGBA colors = cSensor.getNormalizedColors();
+
+        //convert RGBA values to HSV color wheel values for better color mapping
+        float[] hsvValues = new float[3];
+        Color.colorToHSV(colors.toColor(), hsvValues);
+
+        //return hsv values for testing color
+        float hue = hsvValues[0];
+        float saturation = hsvValues[1];
+        float value = hsvValues[2];
+
+        //check values to determine color
+        String returnColor;
+        if (saturation < 0.2 || value < 0.05) {
+            returnColor = "UNKNOWN";
+        } else if (hue >= 90 && hue <= 160) {
+            returnColor = "GREEN";
+        } else if (hue >= 250 && hue <= 330) {
+            returnColor = "PURPLE";
+        } else {
+            returnColor = "UNKNOWN";
+        }
+
+        //FIXME: THESE EXTRA OUTPUTS ARE ONLY FOR TESTING
+        // DELETE EXTRA OUTPUTS AFTER CODE VERIFIED
+        returnColor += String.format("%.2f", hue) + ", ";
+        returnColor += String.format("%.2f", saturation) + ", ";
+        returnColor += String.format("%.2f", value) + ", ";
+
+        return returnColor;
     }
 }
 
