@@ -159,7 +159,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
     private boolean readyToLiftBall() {
         //define hardware constants
         final double TICKS_PER_REV = 8192.0;
-        final double ERROR_MARGIN = TICKS_PER_REV / 100; // Set to how accurate you want the Error Margin to be when spinning hopper.
+        final double ERROR_MARGIN = TICKS_PER_REV / 80; // Set to how accurate you want the Error Margin to be when spinning hopper.
         double pos1 = TICKS_PER_REV / 3 * 0;
         double pos2 = TICKS_PER_REV / 3 * 1;
         double pos3 = TICKS_PER_REV / 3 * 2;
@@ -235,7 +235,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             shooter_right.setPower(1); //turn on shooter motors
             shooter_left.setPower(-1);
             if (!ball_is_ready) {
-                hp = -0.15;
+                hp = -0.11;
             }
         } else {
             shooter_right.setPower(0); //turn off shooter motors
