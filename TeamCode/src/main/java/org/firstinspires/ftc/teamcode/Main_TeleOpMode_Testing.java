@@ -147,12 +147,14 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         double distanceCm = distanceSensor.getDistance(DistanceUnit.CM);
         int i = 0;
         //FIXME: SET DISTANCE TO PROPER VALUE AFTER TESTING
-        while (distanceCm > 2 && i <= 200) {
+        while (distanceCm > 2 && i <= 1000) {
             hopper.setPower(-0.08);
+            distanceCm = distanceSensor.getDistance(DistanceUnit.CM);
             telemetry.addData("HopperDistCM:", distanceCm);
             telemetry.update();
             i++;
         };
+        hopper.setPower(0.0);
     }
 
     //Method for controlling the robot during the main loop
@@ -165,7 +167,8 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
         double pos3 = TICKS_PER_REV / 3 * 2;
 
         //get current hopper position (relative to a full rotation)
-        double currPos = hopper_encoder.getCurrentPosition() % TICKS_PER_REV;
+        double absPos = hopper_encoder.getCurrentPosition();
+        double currPos = ((absPos % TICKS_PER_REV) + TICKS_PER_REV) % TICKS_PER_REV;
 
         //calculate how many ticks away we are from each position
         double check_pos2 = Math.abs(currPos - pos2); //using absolute value to make checking error margin easier
@@ -313,11 +316,8 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
 
         //FIXME: THESE EXTRA OUTPUTS ARE ONLY FOR TESTING
         // DELETE EXTRA OUTPUTS AFTER CODE VERIFIED
-        returnColor += String.format("%.2f", hue) + ", ";
-        returnColor += String.format("%.2f", saturation) + ", ";
-        returnColor += String.format("%.2f", value) + ", ";
+        returnColor += String.format(" H: %.2f, S: %.2f, V: %.2f", hue, saturation, value) + ", ";
 
         return returnColor;
     }
 }
-
