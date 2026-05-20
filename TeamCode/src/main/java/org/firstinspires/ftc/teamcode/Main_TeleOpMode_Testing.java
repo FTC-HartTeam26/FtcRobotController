@@ -233,20 +233,28 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
     }
 
     private double shootBall(boolean ball_is_ready) {
-        double hp = 0; //hopper power
+        double spin_hopper = 0;
         if (gamepad1.a) {
-            shooter_right.setPower(1); //turn on shooter motors
+            shooter_right.setPower(1);
             shooter_left.setPower(-1);
             if (!ball_is_ready) {
-                hp = -0.11;
+                spin_hopper = -0.11;
+            } else {
+                flipper.setPosition(0.1);
+                sleep(2000);
+                flipper.setPosition(0.6);
+                hopper.setPower(-0.15);
+                sleep(500);
+                hopper.setPower(0.0);
             }
         } else {
-            shooter_right.setPower(0); //turn off shooter motors
+            shooter_right.setPower(0);
             shooter_left.setPower(0);
+            flipper.setPosition(0.6);
+            spin_hopper = 0;
         }
-        return hp;
+        return spin_hopper;
     }
-
     private double controlIntake() {
         double hp = 0; //hopper power
         if (gamepad1.b) {
