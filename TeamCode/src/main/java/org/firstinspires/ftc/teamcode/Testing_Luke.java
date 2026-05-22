@@ -1,21 +1,23 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 
-@TeleOp(name="Testing Hardware v1", group="TeleOpModes")
-public class Main_TeleOpMode_Testing extends LinearOpMode {
+@TeleOp(name="Testing_Luke", group="TeleOpModes")
+public class Testing_Luke extends LinearOpMode {
     //Declare class-level objects and variables
     private DcMotor hopper_encoder;
     private CRServo hopper;
@@ -153,7 +155,7 @@ public class Main_TeleOpMode_Testing extends LinearOpMode {
             telemetry.addData("HopperDistCM:", distanceCm);
             telemetry.update();
             i++;
-        };
+        }
         hopper.setPower(0.0);
     }
 

@@ -48,8 +48,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 
-@TeleOp(name="Testing Hardware v1", group="TeleOpModes")
-public class Main_TeleOpMode_Testing_Limelight extends LinearOpMode {
+@TeleOp(name="Testing_Desmond", group="TeleOpModes")
+public class Testing_Desmond extends LinearOpMode {
     double oldTime = 0; //used to calculate loop frequency
     private Limelight3A limelight;
     private IMU imu;

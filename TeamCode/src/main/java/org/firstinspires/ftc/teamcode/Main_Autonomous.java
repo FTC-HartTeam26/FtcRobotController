@@ -4,15 +4,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@Autonomous(name="Main Autonomous Mode", group="OpMode")
-@Disabled
-public class Main_AutoDriveMode extends LinearOpMode {
+@Autonomous(name="Main_Autonomous_Mode", group="AutoMode")
+public class Main_Autonomous extends LinearOpMode {
     private DcMotor back_left;
     private DcMotor front_left;
     private DcMotor front_right;
