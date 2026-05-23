@@ -12,6 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
 
 @TeleOp(name="Main TeleOpMode", group="TeleOpModes")
 public class Main_TeleOpMode extends LinearOpMode {
@@ -29,6 +31,7 @@ public class Main_TeleOpMode extends LinearOpMode {
   private GoBildaPinpointDriver odometryComputer;
   private NormalizedColorSensor colorSensor;
   private DistanceSensor distanceSensor;
+  private Limelight3A limelight;
   private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
   private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
   double oldTime = 0; //used to calculate loop frequency
@@ -43,6 +46,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     configureOdometry();
     //initializeHopper(); //FIXME: UNCOMMENT WHEN DISTANCE SENSOR FIXED
     configureHopperEncoder();
+    configureLimeLight(8);
 
     // variables that need to persist for multiple loop cycles
     boolean down_already_pressed = false; //used to store down button status
@@ -93,6 +97,9 @@ public class Main_TeleOpMode extends LinearOpMode {
       //this method calculates the loop frequency
       updateLoopFrequency();
 
+      //this method sends limelight goal tracking results to telemetry
+      print_limelight_results();
+
       //set hopper motor power if required by shooter or intake
       hopper.setPower(Math.min(hp_intake, hp_shooter));
 
@@ -122,6 +129,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
     distanceSensor = hardwareMap.get(DistanceSensor.class, "ball_color_sensor");
     colorSensor = hardwareMap.get(NormalizedColorSensor.class, "ball_color_sensor");
+    limelight = hardwareMap.get(Limelight3A.class, "limelight");
     //FIXME: DELETE THE TEST SENSOR WHEN DONE TESTING
     colorSensorTest = hardwareMap.get(NormalizedColorSensor.class, "test_color_sensor");
     distanceSensorTest = hardwareMap.get(DistanceSensor.class, "test_color_sensor");
@@ -148,6 +156,24 @@ public class Main_TeleOpMode extends LinearOpMode {
     // Initialize the hopper encoder
     hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
     hopper_encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); //there is no motor
+  }
+
+  private void configureLimeLight(int pipeLine) {
+    limelight.pipelineSwitch(pipeLine);
+    limelight.start();
+  }
+
+  private void print_limelight_results() {
+    LLResult result = limelight.getLatestResult();
+    telemetry.addData("Result is null?", result == null);
+    if (result != null) {
+      telemetry.addData("Result valid?", result.isValid());
+      telemetry.addData("Pipeline", result.getPipelineIndex());
+      telemetry.addData("Tx", result.getTx());
+      telemetry.addData("Ty", result.getTy());
+      telemetry.addData("Ta", result.getTa());
+      telemetry.addData("Botpose MT2 is null?", result.getBotpose_MT2() == null);
+    }
   }
 
   private void initializeHopper() {
