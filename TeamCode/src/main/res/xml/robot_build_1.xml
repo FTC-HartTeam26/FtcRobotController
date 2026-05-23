@@ -20,4 +20,5 @@
             <goBILDAPinpoint name="odometry" port="1" bus="0" />
         </LynxModule>
     </LynxUsbDevice>
+    <EthernetDevice serialNumber="EthernetOverUsb:eth0:172.29.0.27" name="limelight" port="0" ipAddress="172.29.0.1" />
 </Robot>
