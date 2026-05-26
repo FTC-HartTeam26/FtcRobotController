@@ -123,6 +123,7 @@ public class Testing_Desmond extends LinearOpMode {
                 telemetry.addData("Tx", llResult.getTx());
                 telemetry.addData("Ty", llResult.getTy());
                 telemetry.addData("Ta", llResult.getTa());
+                telemetry.update();
             }
 
             //resetting odometry positions and heading
