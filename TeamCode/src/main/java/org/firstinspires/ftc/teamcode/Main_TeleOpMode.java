@@ -283,13 +283,13 @@ public class Main_TeleOpMode extends LinearOpMode {
       } else {
         hopper.setPower(0);
         sleep(1000);
-        flipper.setPosition(0.1);
+        flipper.setPosition(0.3);
 
-        sleep(2000);
-        flipper.setPosition(0.6);
+        sleep(500);
+        flipper.setPosition(0.7);
 
         sleep(1000);
-        hopper.setPower(-0.08);
+        hopper.setPower(-0.12);
         sleep(500);
       }
     }
