@@ -1,20 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
 
 @TeleOp(name="Testing_Luke", group="TeleOpModes")
 public class Testing_Luke extends LinearOpMode {
@@ -31,9 +30,12 @@ public class Testing_Luke extends LinearOpMode {
     private DcMotor back_right;
     private GoBildaPinpointDriver odometryComputer;
     private NormalizedColorSensor colorSensor;
-    private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
     private DistanceSensor distanceSensor;
+    private Limelight3A limelight;
+    private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
+    private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
     double oldTime = 0; //used to calculate loop frequency
+    private Servo hood;
 
     //This is the main method. It runs when you press INIT on the Driver Hub
     //This method also contains the main loop
@@ -43,11 +45,14 @@ public class Testing_Luke extends LinearOpMode {
         initializeHardware();
         configureDriveMotors();
         configureOdometry();
-        initializeHopper(); //FIXME: WILL NEED TO SET CHECK VALUES
+        //initializeHopper(); //FIXME: UNCOMMENT WHEN DISTANCE SENSOR FIXED
         configureHopperEncoder();
+        configureLimeLight(8);
 
         // variables that need to persist for multiple loop cycles
         boolean down_already_pressed = false; //used to store down button status
+        boolean up_already_pressed = false; //used to store up button status
+
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Init:", "Press Start");
@@ -62,8 +67,8 @@ public class Testing_Luke extends LinearOpMode {
             String ballColor;
             ballColor = getBallColor(colorSensor);
 
+            //FIXME: delete this section after testing is complete
             //this method returns the value of the test color sensor
-            //delete this section after testing is complete
             String ballColor_Test;
             ballColor_Test = getBallColor(colorSensorTest);
 
@@ -76,7 +81,8 @@ public class Testing_Luke extends LinearOpMode {
 
             //this method resets odometry readings when down arrow is pressed
             //variable used to make sure the reset only happens once per button press
-            down_already_pressed =  resetOdometry(down_already_pressed);
+            down_already_pressed =  hood_down (down_already_pressed);
+            up_already_pressed =  hood_up (up_already_pressed);
 
             //this method sets shooter motors power and returns hopper power
             double hp_shooter; //hopper power for aligning ball to flipper
@@ -87,7 +93,7 @@ public class Testing_Luke extends LinearOpMode {
             hp_intake =  controlIntake();
 
             //this method raises flipper if up arrow is pressed
-            controlFlipper();
+            //controlFlipper();
 
             //this method updates odometry readings
             updateOdometry();
@@ -95,10 +101,19 @@ public class Testing_Luke extends LinearOpMode {
             //this method calculates the loop frequency
             updateLoopFrequency();
 
+            //this method sends limelight goal tracking results to telemetry
+            print_limelight_results();
+
             //set hopper motor power if required by shooter or intake
             hopper.setPower(Math.min(hp_intake, hp_shooter));
+
+            //FIXME: DELETE THIS CODE AFTER TESTING
             telemetry.addData("Ball Color", ballColor);
             telemetry.addData("Test Sensor", ballColor_Test);
+            String ballDist = String.format("%.2f", distanceSensor.getDistance(DistanceUnit.CM));
+            String distBaseline = String.format("%.2f", distanceSensorTest.getDistance(DistanceUnit.CM));
+            telemetry.addData("Ball Dist", ballDist);
+            telemetry.addData("Dist Baseline", distBaseline);
             telemetry.update();
         }
     }
@@ -118,8 +133,11 @@ public class Testing_Luke extends LinearOpMode {
         hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "ball_color_sensor");
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "ball_color_sensor");
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
         //FIXME: DELETE THE TEST SENSOR WHEN DONE TESTING
         colorSensorTest = hardwareMap.get(NormalizedColorSensor.class, "test_color_sensor");
+        distanceSensorTest = hardwareMap.get(DistanceSensor.class, "test_color_sensor");
+        hood = hardwareMap.get(Servo.class, "hood");
     }
 
     private void configureDriveMotors() {
@@ -142,13 +160,31 @@ public class Testing_Luke extends LinearOpMode {
     private void configureHopperEncoder() {
         // Initialize the hopper encoder
         hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
-        hopper_encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
+        hopper_encoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); //there is no motor
+    }
+
+    private void configureLimeLight(int pipeLine) {
+        limelight.pipelineSwitch(pipeLine);
+        limelight.start();
+    }
+
+    private void print_limelight_results() {
+        LLResult result = limelight.getLatestResult();
+        telemetry.addData("Result is null?", result == null);
+        if (result != null) {
+            telemetry.addData("Result valid?", result.isValid());
+            telemetry.addData("Pipeline", result.getPipelineIndex());
+            telemetry.addData("Tx", result.getTx());
+            telemetry.addData("Ty", result.getTy());
+            telemetry.addData("Ta", result.getTa());
+            telemetry.addData("Botpose MT2 is null?", result.getBotpose_MT2() == null);
+        }
     }
 
     private void initializeHopper() {
+        //FIXME: DISTANCE SENSOR ISN'T WORKING, CODE NEEDS TUNING WHEN SENSOR IS FIXED
         double distanceCm = distanceSensor.getDistance(DistanceUnit.CM);
         int i = 0;
-        //FIXME: SET DISTANCE TO PROPER VALUE AFTER TESTING
         while (distanceCm > 2 && i <= 1000) {
             hopper.setPower(-0.08);
             distanceCm = distanceSensor.getDistance(DistanceUnit.CM);
@@ -235,32 +271,32 @@ public class Testing_Luke extends LinearOpMode {
     }
 
     private double shootBall(boolean ball_is_ready) {
-        double spin_hopper = 0;
+        double hopperPower = 0;
+        double shootPower_r = 0;
+        double shootPower_l = 0;
         if (gamepad1.a) {
-            shooter_right.setPower(1);
-            shooter_left.setPower(-1);
+            shootPower_r = -0.6;
+            shootPower_l = 0.6;
             if (!ball_is_ready) {
-                spin_hopper = -0.11;
+                hopperPower = -0.08;
             } else {
                 flipper.setPosition(0.1);
                 sleep(2000);
                 flipper.setPosition(0.6);
-                hopper.setPower(-0.15);
+                hopper.setPower(-0.12);
                 sleep(500);
                 hopper.setPower(0.0);
             }
-        } else {
-            shooter_right.setPower(0);
-            shooter_left.setPower(0);
-            flipper.setPosition(0.6);
-            spin_hopper = 0;
         }
-        return spin_hopper;
+        shooter_right.setPower(shootPower_r);
+        shooter_left.setPower(shootPower_l);
+        return hopperPower;
     }
+
     private double controlIntake() {
         double hp = 0; //hopper power
         if (gamepad1.b) {
-            intake.setPower(1); //turn on intake motor
+            intake.setPower(0.95); //turn on intake motor
             hp = -0.15; //set hopper motor power (negative spins clockwise)
         } else {
             intake.setPower(0); //turn off intake motor
@@ -275,8 +311,6 @@ public class Testing_Luke extends LinearOpMode {
         } else {
             flipper.setPosition(0.6);
         }
-        double flipperPos = flipper.getPosition(); //check flipper position
-        telemetry.addData("Flipper Position:", flipperPos);
     }
 
     private void updateOdometry() {
@@ -316,9 +350,9 @@ public class Testing_Luke extends LinearOpMode {
         String returnColor;
         if (saturation < 0.2 || value < 0.05) {
             returnColor = "UNKNOWN";
-        } else if (hue >= 90 && hue <= 160) {
+        } else if (hue >= 90 && hue <= 185) {
             returnColor = "GREEN";
-        } else if (hue >= 250 && hue <= 330) {
+        } else if (hue >= 210 && hue <= 330) {
             returnColor = "PURPLE";
         } else {
             returnColor = "UNKNOWN";
@@ -330,4 +364,28 @@ public class Testing_Luke extends LinearOpMode {
 
         return returnColor;
     }
+
+    private boolean hood_down (boolean lastDownArrow) {
+        //resetting odometry positions and heading
+        boolean currDownArrow = (gamepad1.dpad_down) ;
+        double currHoodPosition = hood.getPosition() ;
+        if (currDownArrow && !lastDownArrow) {
+            hood.setPosition(currHoodPosition - 0.1) ;
+        }
+        lastDownArrow = currDownArrow;
+        telemetry.addData("hood pos",hood.getPosition());
+        return lastDownArrow;
+    }
+    private boolean hood_up (boolean lastUpArrow) {
+        //resetting odometry positions and heading
+        boolean currUpArrow = (gamepad1.dpad_up) ;
+        double currHoodPosition = hood.getPosition() ;
+        if (currUpArrow && !lastUpArrow) {
+            hood.setPosition(currHoodPosition + 0.1) ;
+        }
+        lastUpArrow = currUpArrow;
+        telemetry.addData("hood pos",hood.getPosition());
+        return lastUpArrow;
+    }
+
 }
