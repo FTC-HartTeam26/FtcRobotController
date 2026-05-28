@@ -51,7 +51,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 @TeleOp(name="Testing_Desmond", group="TeleOpModes")
 public class Testing_Desmond extends LinearOpMode {
     double oldTime = 0; //used to calculate loop frequency
+
+
     private Limelight3A limelight;
+    private double CAMERA_HEIGHT_IN = 12.625;
+    private double CAMERA_ANGLE = 20;
+    private double GOAL_HEIGHT = 29.5;
+    private double distance = 0;
     private IMU imu;
 
     @Override
@@ -123,6 +129,12 @@ public class Testing_Desmond extends LinearOpMode {
                 telemetry.addData("Tx", llResult.getTx());
                 telemetry.addData("Ty", llResult.getTy());
                 telemetry.addData("Ta", llResult.getTa());
+                distance = getDistance(llResult.getTy());
+                telemetry.addData("Distance", distance);
+                telemetry.update();
+            } else {
+                telemetry.addData("No Valid Target", "Found");
+                telemetry.update();
             }
 
             //resetting odometry positions and heading
@@ -185,5 +197,13 @@ public class Testing_Desmond extends LinearOpMode {
             telemetry.addData("Hopper Encoder:", hopper_encoder.getCurrentPosition());
             telemetry.update();
         }
+    }
+
+    //limelight distance calculations
+    public double getDistance(double ty){
+        double angleToTarget = CAMERA_ANGLE  + ty;
+        double heightDifference = GOAL_HEIGHT - CAMERA_HEIGHT_IN;
+
+    return  heightDifference / Math.tan(Math.toRadians(angleToTarget));
     }
 }

@@ -269,22 +269,34 @@ public class Main_TeleOpMode extends LinearOpMode {
     double hopperPower = 0;
     double shootPower_r = 0;
     double shootPower_l = 0;
+
+
     if (gamepad1.a) {
-      shootPower_r = -0.6;
-      shootPower_l = 0.6;
+
+      shootPower_r = -0.7;
+      shootPower_l = 0.7;
+      shooter_right.setPower(shootPower_r);
+      shooter_left.setPower(shootPower_l);
+
       if (!ball_is_ready) {
-        hopperPower = -0.08;
+        hopperPower = -0.12;
       } else {
+        hopper.setPower(0);
+        sleep(1000);
         flipper.setPosition(0.1);
+
         sleep(2000);
         flipper.setPosition(0.6);
+
+        sleep(1000);
         hopper.setPower(-0.08);
         sleep(500);
-        hopper.setPower(0.0);
       }
     }
-    shooter_right.setPower(shootPower_r);
-    shooter_left.setPower(shootPower_l);
+    else {
+      shooter_right.setPower(0);
+      shooter_left.setPower(0);
+    }
     return hopperPower;
   }
 
