@@ -34,6 +34,7 @@ public class Main_TeleOpMode extends LinearOpMode {
   private Limelight3A limelight;
   private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
   private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
+  private Servo hood;
   double oldTime = 0; //used to calculate loop frequency
 
   //This is the main method. It runs when you press INIT on the Driver Hub
@@ -50,6 +51,7 @@ public class Main_TeleOpMode extends LinearOpMode {
 
     // variables that need to persist for multiple loop cycles
     boolean down_already_pressed = false; //used to store down button status
+    boolean up_already_pressed = false; //used to store up button status
 
     // Wait for the game to start (driver presses START)
     telemetry.addData("Init:", "Press Start");
@@ -78,7 +80,8 @@ public class Main_TeleOpMode extends LinearOpMode {
 
       //this method resets odometry readings when down arrow is pressed
       //variable used to make sure the reset only happens once per button press
-      down_already_pressed =  resetOdometry(down_already_pressed);
+      down_already_pressed =  hood_down(down_already_pressed);
+      up_already_pressed =  hood_up(up_already_pressed);
 
       //this method sets shooter motors power and returns hopper power
       double hp_shooter; //hopper power for aligning ball to flipper
@@ -89,7 +92,7 @@ public class Main_TeleOpMode extends LinearOpMode {
       hp_intake =  controlIntake();
 
       //this method raises flipper if up arrow is pressed
-      controlFlipper();
+      //controlFlipper();
 
       //this method updates odometry readings
       updateOdometry();
@@ -133,6 +136,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     //FIXME: DELETE THE TEST SENSOR WHEN DONE TESTING
     colorSensorTest = hardwareMap.get(NormalizedColorSensor.class, "test_color_sensor");
     distanceSensorTest = hardwareMap.get(DistanceSensor.class, "test_color_sensor");
+    hood = hardwareMap.get(Servo.class, "hood");
   }
 
   private void configureDriveMotors() {
@@ -370,5 +374,29 @@ public class Main_TeleOpMode extends LinearOpMode {
     returnColor += String.format(" H: %.2f, S: %.2f, V: %.2f", hue, saturation, value) + ", ";
 
     return returnColor;
+  }
+
+  private boolean hood_down (boolean lastDownArrow) {
+    //resetting odometry positions and heading
+    boolean currDownArrow = (gamepad1.dpad_down) ;
+    double currHoodPosition = hood.getPosition() ;
+    if (currDownArrow && !lastDownArrow) {
+      hood.setPosition(currHoodPosition - 0.1) ;
+    }
+    lastDownArrow = currDownArrow;
+    telemetry.addData("hood pos",hood.getPosition());
+    return lastDownArrow;
+  }
+
+  private boolean hood_up (boolean lastUpArrow) {
+    //resetting odometry positions and heading
+    boolean currUpArrow = (gamepad1.dpad_up) ;
+    double currHoodPosition = hood.getPosition() ;
+    if (currUpArrow && !lastUpArrow) {
+      hood.setPosition(currHoodPosition + 0.1) ;
+    }
+    lastUpArrow = currUpArrow;
+    telemetry.addData("hood pos",hood.getPosition());
+    return lastUpArrow;
   }
 }
