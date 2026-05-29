@@ -20,8 +20,8 @@ public class Main_Autonomous extends LinearOpMode {
 
     public void runOpMode() {
 
-        configureOdometry();
         initializeHardware();
+        configureOdometry();
         configureDriveMotors();
 
         // Wait for the game to start (driver presses START)
