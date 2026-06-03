@@ -8,6 +8,7 @@
             <RevRoboticsCoreHexMotor name="hopper_encoder" port="3" />
             <RevColorSensorV3 name="test_color_sensor" port="0" bus="1" />
             <RevColorSensorV3 name="ball_color_sensor" port="0" bus="0" />
+            <ServoFullRange name="hood" port="5" />
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
             <goBILDA5202SeriesMotor name="front_right" port="0" />
