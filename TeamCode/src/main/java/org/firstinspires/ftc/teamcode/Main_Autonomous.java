@@ -1,21 +1,39 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @Autonomous(name="Main_Autonomous_Mode", group="AutoMode")
 public class Main_Autonomous extends LinearOpMode {
+    private DcMotor hopper_encoder;
+    private CRServo hopper;
+    private Servo flipper;
+    private DcMotor shooter_left;
+    private DcMotor shooter_right;
+    private DcMotor intake;
     private DcMotor back_left;
     private DcMotor front_left;
     private DcMotor front_right;
     private DcMotor back_right;
     private GoBildaPinpointDriver odometryComputer;
-
+    private NormalizedColorSensor colorSensor;
+    private DistanceSensor distanceSensor;
+    private Limelight3A limelight;
+    private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
+    private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
+    private Servo hood;
+    double oldTime = 0; //used to calculate loop frequency
+    private int ballShotCount;
     @Override
 
     public void runOpMode() {
@@ -23,21 +41,31 @@ public class Main_Autonomous extends LinearOpMode {
         initializeHardware();
         configureOdometry();
         configureDriveMotors();
+        configureOdometry();
+        ballShotCount = 0;
 
-        // Wait for the game to start (driver presses START)
         waitForStart();
 
-        driveToPosition_Relative(304.8); // using MM, i.e. 12 inches = 304.8 mm
+        while (opModeIsActive()) {
 
-        rotate_Relative(90);
-        driveToPosition_Relative(304.8);
+            //this method returns whether the ball is in shooting position
+            boolean ball_in_position = false; //reset ball in position variable
+            ball_in_position =  readyToLiftBall();
 
-        rotate_Relative(90);
-        driveToPosition_Relative(304.8);
+            //this method sets shooter motors power and returns hopper power
+            double hp_shooter; //hopper power for aligning ball to flipper
+            hp_shooter = shootBall(ball_in_position);
 
-        rotate_Relative(90);
-        driveToPosition_Relative(304.8);
+            //set hopper motor power if required by shooter or intake
+            hopper.setPower(hp_shooter);
 
+            if (ballShotCount == 3) {
+                driveRobot(0.3, 0, -0.2);
+                sleep(2000);
+                driveRobot(0,0,0);
+                return;
+            }
+        }
     }
     private void driveToPosition_Relative(double dist) {
         double margin_of_error = 5.0; // update error margin as needed
@@ -98,15 +126,38 @@ public class Main_Autonomous extends LinearOpMode {
             if (turnPower < 0 && turnPower > -minPower) turnPower = -minPower;
 
             driveRobot(0, 0, turnPower);
+            sleep(1000);
+            telemetry.addData("Start", startDeg);
+            telemetry.addData("Current", currHeading);
+            telemetry.addData("Target", targetHeading);
+            telemetry.addData("Error", error);
+            telemetry.addData("Power", turnPower);
+            telemetry.addData("Heading", odometryComputer.getHeading(AngleUnit.DEGREES));
+            telemetry.addData("X", odometryComputer.getPosX(DistanceUnit.MM));
+            telemetry.addData("Y", odometryComputer.getPosY(DistanceUnit.MM));
+            telemetry.update();
         }
         driveRobot(0, 0, 0); // Stop the robot
     }
-    private void initializeHardware(){
+    private void initializeHardware() {
         back_right = hardwareMap.get(DcMotor.class, "back_right");
         front_right = hardwareMap.get(DcMotor.class, "front_right");
         front_left = hardwareMap.get(DcMotor.class, "front_left");
         back_left = hardwareMap.get(DcMotor.class, "back_left");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        shooter_right = hardwareMap.get(DcMotor.class, "shooter_right");
+        shooter_left = hardwareMap.get(DcMotor.class, "shooter_left");
+        hopper = hardwareMap.get(CRServo.class, "hopper");
+        flipper = hardwareMap.get(Servo.class, "flipper");
         odometryComputer = hardwareMap.get(GoBildaPinpointDriver.class, "odometry");
+        hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "ball_color_sensor");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "ball_color_sensor");
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        //FIXME: DELETE THE TEST SENSOR WHEN DONE TESTING
+        colorSensorTest = hardwareMap.get(NormalizedColorSensor.class, "test_color_sensor");
+        distanceSensorTest = hardwareMap.get(DistanceSensor.class, "test_color_sensor");
+        hood = hardwareMap.get(Servo.class, "hood");
     }
     private void configureDriveMotors() {
         //set up drive motor directions
@@ -124,6 +175,8 @@ public class Main_Autonomous extends LinearOpMode {
         odometryComputer.setOffsets(10.0, -15.0, DistanceUnit.MM);
         odometryComputer.setYawScalar(1.0); // Tune if turning is inaccurate
         odometryComputer.resetPosAndIMU(); // Reset position to (0,0) and heading to 0
+        sleep(500);
+        odometryComputer.update();
     }
     private void driveRobot(double drive, double strafe, double turn) {
 
@@ -143,5 +196,79 @@ public class Main_Autonomous extends LinearOpMode {
         back_right.setPower(br / max);
         front_left.setPower(fl / max);
         back_left.setPower(bl / max);
+    }
+    private double shootBall(boolean ball_is_ready) {
+        double hopperPower = 0;
+        double shootPower_r = 0;
+        double shootPower_l = 0;
+
+
+        if (ballShotCount < 3) {
+
+            shootPower_r = -0.7;
+            shootPower_l = 0.7;
+            shooter_right.setPower(shootPower_r);
+            shooter_left.setPower(shootPower_l);
+
+            if (!ball_is_ready) {
+                hopperPower = -0.12;
+            } else {
+                hopper.setPower(0);
+                sleep(1000);
+                flipper.setPosition(0.3);
+
+                sleep(500);
+                flipper.setPosition(0.7);
+                ballShotCount = ballShotCount + 1;
+
+                sleep(1000);
+                hopper.setPower(-0.12);
+                sleep(500);
+            }
+        }
+        else {
+            shooter_right.setPower(0);
+            shooter_left.setPower(0);
+        }
+        return hopperPower;
+    }
+    private boolean readyToLiftBall() {
+        //define hardware constants
+        final double TICKS_PER_REV = 8192.0;
+        final double ERROR_MARGIN = TICKS_PER_REV / 80; // Set to how accurate you want the Error Margin to be when spinning hopper.
+        double pos1 = TICKS_PER_REV / 3 * 0;
+        double pos2 = TICKS_PER_REV / 3 * 1;
+        double pos3 = TICKS_PER_REV / 3 * 2;
+
+        //get current hopper position (relative to a full rotation)
+        double absPos = hopper_encoder.getCurrentPosition();
+        double currPos = ((absPos % TICKS_PER_REV) + TICKS_PER_REV) % TICKS_PER_REV;
+
+        //calculate how many ticks away we are from each position
+        double check_pos2 = Math.abs(currPos - pos2); //using absolute value to make checking error margin easier
+        double check_pos3 = Math.abs(currPos - pos3);
+        //position 1 is unique because currPos goes from max ticks back to zero
+        //this means checking for the margin of error is tricky
+        //to fix this we reverse the check position halfway through the rotation
+        double currPos1;
+        if (currPos < TICKS_PER_REV / 2) {
+            currPos1 = currPos;
+        } else {
+            currPos1 = TICKS_PER_REV - currPos;
+        }
+        double check_pos1 = Math.abs(currPos1 - pos1);
+
+        //check if ball is in any of the shooting positions, set ball_in_pos accordingly
+        boolean ballInPos = false;
+        if (check_pos1 <= ERROR_MARGIN) {
+            ballInPos = true;
+        } else if (check_pos2 <= ERROR_MARGIN) {
+            ballInPos = true;
+        } else if (check_pos3 <= ERROR_MARGIN) {
+            ballInPos = true;
+        }
+        telemetry.addData("Hopper Encoder:", hopper_encoder.getCurrentPosition());
+        telemetry.addData("Ball in Pos", ballInPos);
+        return ballInPos;
     }
 }
