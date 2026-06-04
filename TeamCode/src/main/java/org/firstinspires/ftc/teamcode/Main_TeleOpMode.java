@@ -36,6 +36,7 @@ public class Main_TeleOpMode extends LinearOpMode {
   private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
   private Servo hood;
   double oldTime = 0; //used to calculate loop frequency
+  private int TimesInPos = 0;
 
   //This is the main method. It runs when you press INIT on the Driver Hub
   //This method also contains the main loop
@@ -237,7 +238,7 @@ public class Main_TeleOpMode extends LinearOpMode {
 
   private void driveRobot() {
     //limit motors to half speed
-    double drive = gamepad1.left_stick_y * 0.5;
+    double drive = gamepad1.left_stick_y * 0.7;
     double strafe = gamepad1.left_stick_x * 0.0;
     double turn = gamepad1.right_stick_x * 0.5;
 
@@ -277,29 +278,34 @@ public class Main_TeleOpMode extends LinearOpMode {
 
     if (gamepad1.a) {
 
-      shootPower_r = -0.7;
-      shootPower_l = 0.7;
+      shootPower_r = -0.6;
+      shootPower_l = 0.6;
       shooter_right.setPower(shootPower_r);
       shooter_left.setPower(shootPower_l);
 
       if (!ball_is_ready) {
-        hopperPower = -0.12;
+        hopperPower = -0.15;
       } else {
+        TimesInPos += 1;
         hopper.setPower(0);
-        sleep(1000);
-        flipper.setPosition(0.3);
+
+        if(TimesInPos == 1){
+          sleep(1300);
+        }
+        flipper.setPosition(0.2);
 
         sleep(500);
         flipper.setPosition(0.7);
 
-        sleep(1000);
-        hopper.setPower(-0.12);
-        sleep(500);
+        sleep(900);
+        hopper.setPower(-0.15);
+        sleep(150);
       }
     }
     else {
       shooter_right.setPower(0);
       shooter_left.setPower(0);
+      TimesInPos = 0;
     }
     return hopperPower;
   }

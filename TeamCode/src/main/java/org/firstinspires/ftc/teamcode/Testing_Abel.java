@@ -199,18 +199,19 @@ public class Testing_Abel extends LinearOpMode {
     }
 
     private void driveRobot() {
-        //limit motors to half speed
+        // Limit motors to half speed
         double drive = gamepad1.left_stick_y * 0.5;
-        double strafe = gamepad1.left_stick_x * 0.5;
+// double strafe = gamepad1.left_stick_x * 0.5; // Strafing disabled
         double turn = gamepad1.right_stick_x * 0.5;
 
-        //configuration for mecanum wheels is the sum of all inputs (see mecanum diagram)
-        double fr = drive + strafe + turn;
-        double br = drive - strafe + turn;
-        double fl = drive - strafe - turn;
-        double bl = drive + strafe - turn;
+// Configuration for mecanum wheels
+// Strafing terms removed to prevent sideways movement
+        double fr = drive + turn;
+        double br = drive + turn;
+        double fl = drive - turn;
+        double bl = drive - turn;
 
-        //max is used to normalize motor power to a max of 1.0
+// Max is used to normalize motor power to a max of 1.0
         double max = Math.max(1.0, Math.max(
                 Math.max(Math.abs(fr), Math.abs(br)),
                 Math.max(Math.abs(fl), Math.abs(bl))
