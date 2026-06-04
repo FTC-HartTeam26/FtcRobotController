@@ -239,7 +239,7 @@ public class Main_TeleOpMode extends LinearOpMode {
   private void driveRobot() {
     //limit motors to half speed
     double drive = gamepad1.left_stick_y * 0.7;
-    double strafe = gamepad1.left_stick_x * 0.0;
+    double strafe = gamepad1.left_stick_x * 0.5;
     double turn = gamepad1.right_stick_x * 0.5;
 
     //configuration for mecanum wheels is the sum of all inputs (see mecanum diagram)
