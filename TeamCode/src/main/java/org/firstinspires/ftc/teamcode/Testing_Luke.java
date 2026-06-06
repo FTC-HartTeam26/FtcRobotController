@@ -298,12 +298,15 @@ public class Testing_Luke extends LinearOpMode {
         if (gamepad1.b) {
             intake.setPower(0.95); //turn on intake motor
             hp = -0.15; //set hopper motor power (negative spins clockwise)
+        } else if (gamepad1.y) {
+            intake.setPower(-0.95); //turn on intake motor
+            hp = 0.15; //set hopper motor power (negative spins clockwise)
         } else {
             intake.setPower(0); //turn off intake motor
         }
+
         return hp;
     }
-
     private void controlFlipper() {
         // Lift ball into Shooter using Flipper
         if (gamepad1.dpad_up) {
