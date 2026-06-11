@@ -29,8 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -40,19 +38,14 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-
 @TeleOp(name="Testing_Desmond_v2", group="TeleOpModes")
 public class Testing_Desmond_v2 extends LinearOpMode {
-    double oldTime = 0; //used to calculate loop frequency
-
-
     private Limelight3A limelight;
     private double CAMERA_HEIGHT_IN = 12.625;
     private double CAMERA_ANGLE = 20;
@@ -67,47 +60,29 @@ public class Testing_Desmond_v2 extends LinearOpMode {
         DcMotor front_right = hardwareMap.get(DcMotor.class, "front_right");
         DcMotor front_left = hardwareMap.get(DcMotor.class, "front_left");
         DcMotor back_left = hardwareMap.get(DcMotor.class, "back_left");
-        DcMotor intake = hardwareMap.get(DcMotor.class, "intake");
-        DcMotor shooter_right = hardwareMap.get(DcMotor.class, "shooter_right");
-        DcMotor shooter_left = hardwareMap.get(DcMotor.class, "shooter_left");
-
-        //servo setup
-        CRServo hopper = hardwareMap.get(CRServo.class, "hopper");
-        Servo flipper = hardwareMap.get(Servo.class, "flipper");
-
-        //sensor setup
-        GoBildaPinpointDriver odometryComputer = hardwareMap.get(GoBildaPinpointDriver.class,"odometry");
-
-        //limelight setup
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(8);
-        imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot revHubOrientationOnRobot = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
-            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
-        );
-        imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
-        limelight.start();
-
 
         //set up drive motor directions
         back_right.setDirection(DcMotor.Direction.REVERSE);
         front_right.setDirection(DcMotor.Direction.REVERSE);
 
-        // Configure Odometry Pods (Adjust FWD/REV based on your bot)
-        odometryComputer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        // arg1 is X-encoder, arg2 is Y-encoder
-        odometryComputer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        //limelight setup
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.pipelineSwitch(8);
+        imu = hardwareMap.get(IMU.class, "imu");
+        RevHubOrientationOnRobot revHubOrientationOnRobot =
+                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        );
+        imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
+        imu.resetYaw();
+        limelight.start();
 
-        // Define offsets (distance from center of rotation)
-        odometryComputer.setOffsets(10.0, -15.0, DistanceUnit.MM);
-        odometryComputer.setYawScalar(1.0); // Tune if turning is inaccurate
-        odometryComputer.resetPosAndIMU(); // Reset position to (0,0) and heading to 0
-        boolean lastA = false; //used to identify when dpad down button is pressed
-
-        // Initialize the hopper encoder
-        DcMotor hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
-        // hopper_encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //reset the encoder to zero
-        hopper_encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Use RUN_USING_ENCODER for velocity control or RUN_TO_POSITION for specific targets
+        //Display initial limelight status
+        telemetry.addData("Status", "Limelight initialized");
+        telemetry.addData("Limelight connected?", limelight.isConnected());
+        telemetry.addData("Limelight running?", limelight.isRunning());
+        telemetry.addData("Time since update", limelight.getTimeSinceLastUpdate());
+        telemetry.update();
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -120,86 +95,35 @@ public class Testing_Desmond_v2 extends LinearOpMode {
             front_left.setPower((gamepad1.left_stick_y * 0.5 - gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
             back_left.setPower((gamepad1.left_stick_y * 0.5 + gamepad1.left_stick_x * 0.5) - gamepad1.right_stick_x * 0.5);
 
-            //limelight
+            //Get data from Limelight
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
             LLResult llResult = limelight.getLatestResult();
 
+            //Add limelight results to telemetry for debugging
             telemetry.addData("Limelight result is null?", llResult == null);
-
-            if (llResult == null) {
-                telemetry.addData("Limelight", "No result returned");
-            } else {
+            if (llResult != null) {
                 telemetry.addData("Limelight result valid?", llResult.isValid());
                 telemetry.addData("Pipeline", llResult.getPipelineIndex());
                 telemetry.addData("Tx", llResult.getTx());
                 telemetry.addData("Ty", llResult.getTy());
                 telemetry.addData("Ta", llResult.getTa());
-
                 if (llResult.isValid()) {
+                    distance = getDistance(llResult.getTy());
+                    telemetry.addData("Distance", distance);
                     telemetry.addData("BotPose is null?", llResult.getBotpose_MT2() == null);
                 } else {
                     telemetry.addData("Limelight", "Result returned, but no valid target");
                 }
             }
 
-            //resetting odometry positions and heading
-            boolean currentA = gamepad1.dpad_down;
-            if (currentA && !lastA) {
-                odometryComputer.resetPosAndIMU();
-            }
-            lastA = currentA;
-
-            //Turn on Shooting Motors
-            if (gamepad1.a) {
-                shooter_right.setPower(1);
-                shooter_left.setPower(-1);
-            } else {
-                shooter_right.setPower(0);
-                shooter_left.setPower(0);
-            }
-
-            //Turn on Intake Motors and spin Hopper
-            if (gamepad1.b) {
-                intake.setPower(1);
-                hopper.setPower(-.15);
-            } else {
-                intake.setPower(0);
-                hopper.setPower(0);
-            }
-
-            // Lift ball into Shooter using Flipper
-            if (gamepad1.dpad_up) {
-                flipper.setPosition(0.0);
-            } else {
-                flipper.setPosition(1.0);
-            }
-            double flipperPos = flipper.getPosition(); //check flipper position
-
-            //get odometry data
-            odometryComputer.update(); // Crucial: Refresh sensor data
-            Pose2D pos = odometryComputer.getPosition();
-            double X = pos.getX(DistanceUnit.MM);
-            double Y = pos.getY(DistanceUnit.MM);
-            double H = pos.getHeading(AngleUnit.DEGREES);
-            //double Vel_X = odometryComputer.getVelX(DistanceUnit.MM); //uncomment to use velocity
-            //double Vel_Y = odometryComputer.getVelY(DistanceUnit.MM);
-            //double Vel_H = odometryComputer.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
-
-            //Calculate loop frequency, large number = fast = good
-            double newTime = getRuntime();
-            double loopTime = newTime-oldTime;
-            double frequency = 1/loopTime;
-            oldTime = newTime;
-
-            //telemetry outputs
+            //Output telemetry
             telemetry.update();
         }
     }
 
-    //limelight distance calculations
     public double getDistance(double ty){
-
+        //limelight distance calculations
         double angleToTarget = CAMERA_ANGLE  + ty;
         double heightDifference = GOAL_HEIGHT - CAMERA_HEIGHT_IN;
         return  heightDifference / Math.tan(Math.toRadians(angleToTarget));
