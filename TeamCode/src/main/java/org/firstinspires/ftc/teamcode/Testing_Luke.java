@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResult;
 
-@TeleOp(name="Testing_Luke", group="TeleOpModes")
+@TeleOp(name="Testing Luke", group="TeleOpModes")
 public class Testing_Luke extends LinearOpMode {
     //Declare class-level objects and variables
     private DcMotor hopper_encoder;
@@ -34,8 +34,9 @@ public class Testing_Luke extends LinearOpMode {
     private Limelight3A limelight;
     private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
     private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
-    double oldTime = 0; //used to calculate loop frequency
     private Servo hood;
+    double oldTime = 0; //used to calculate loop frequency
+    private int TimesInPos = 0;
 
     //This is the main method. It runs when you press INIT on the Driver Hub
     //This method also contains the main loop
@@ -52,7 +53,6 @@ public class Testing_Luke extends LinearOpMode {
         // variables that need to persist for multiple loop cycles
         boolean down_already_pressed = false; //used to store down button status
         boolean up_already_pressed = false; //used to store up button status
-
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Init:", "Press Start");
@@ -81,12 +81,17 @@ public class Testing_Luke extends LinearOpMode {
 
             //this method resets odometry readings when down arrow is pressed
             //variable used to make sure the reset only happens once per button press
-            down_already_pressed =  hood_down (down_already_pressed);
-            up_already_pressed =  hood_up (up_already_pressed);
+            down_already_pressed =  hood_down(down_already_pressed);
+            up_already_pressed =  hood_up(up_already_pressed);
 
             //this method sets shooter motors power and returns hopper power
-            double hp_shooter; //hopper power for aligning ball to flipper
-            hp_shooter = shootBall(ball_in_position);
+            double hp_shooter = 0;//hopper power for aligning ball to flipper
+            if (gamepad1.b) {
+                hp_shooter = shootBall_far(ball_in_position);
+            }
+            else if (gamepad1.right_bumper) {
+                hp_shooter = shootBall_near(ball_in_position);
+            }
 
             //this method sets intake motors and returns hopper power
             double hp_intake; //hopper power for ball intake
@@ -238,7 +243,7 @@ public class Testing_Luke extends LinearOpMode {
 
     private void driveRobot() {
         //limit motors to half speed
-        double drive = gamepad1.left_stick_y * 0.5;
+        double drive = gamepad1.left_stick_y * 0.7;
         double strafe = gamepad1.left_stick_x * 0.5;
         double turn = gamepad1.right_stick_x * 0.5;
 
@@ -270,27 +275,86 @@ public class Testing_Luke extends LinearOpMode {
         return lastDownArrow;
     }
 
-    private double shootBall(boolean ball_is_ready) {
+    private double shootBall_near(boolean ball_is_ready) {
         double hopperPower = 0;
         double shootPower_r = 0;
         double shootPower_l = 0;
+
+
         if (gamepad1.a) {
+
             shootPower_r = -0.6;
             shootPower_l = 0.6;
+            shooter_right.setPower(shootPower_r);
+            shooter_left.setPower(shootPower_l);
+
             if (!ball_is_ready) {
-                hopperPower = -0.08;
+                hopperPower = -0.15;
             } else {
-                flipper.setPosition(0.1);
-                sleep(2000);
-                flipper.setPosition(0.6);
-                hopper.setPower(-0.12);
+                TimesInPos += 1;
+                hopper.setPower(0);
+
+                if(TimesInPos == 1){
+                    sleep(1700);
+                }
+                flipper.setPosition(0.2);
+
                 sleep(500);
-                hopper.setPower(0.0);
+                flipper.setPosition(0.7);
+
+                sleep(900);
+                hopper.setPower(-0.15);
+                sleep(150);
             }
         }
-        shooter_right.setPower(shootPower_r);
-        shooter_left.setPower(shootPower_l);
+        else {
+            shooter_right.setPower(0);
+            shooter_left.setPower(0);
+            TimesInPos = 0;
+        }
         return hopperPower;
+
+    }
+
+    private double shootBall_far(boolean ball_is_ready) {
+        double hopperPower = 0;
+        double shootPower_r = 0;
+        double shootPower_l = 0;
+
+
+        if (gamepad1.right_bumper) {
+
+            shootPower_r = -0.95;
+            shootPower_l = 0.95;
+            shooter_right.setPower(shootPower_r);
+            shooter_left.setPower(shootPower_l);
+            hood.setPosition(0.0);
+            if (!ball_is_ready) {
+                hopperPower = -0.15;
+            } else {
+                TimesInPos += 1;
+                hopper.setPower(0);
+
+                if(TimesInPos == 1){
+                    sleep(1700);
+                }
+                flipper.setPosition(0.2);
+
+                sleep(500);
+                flipper.setPosition(0.7);
+
+                sleep(900);
+                hopper.setPower(-0.15);
+                sleep(150);
+            }
+        }
+        else {
+            shooter_right.setPower(0);
+            shooter_left.setPower(0);
+            TimesInPos = 0;
+        }
+        return hopperPower;
+
     }
 
     private double controlIntake() {
@@ -298,15 +362,12 @@ public class Testing_Luke extends LinearOpMode {
         if (gamepad1.b) {
             intake.setPower(0.95); //turn on intake motor
             hp = -0.15; //set hopper motor power (negative spins clockwise)
-        } else if (gamepad1.y) {
-            intake.setPower(-0.95); //turn on intake motor
-            hp = 0.15; //set hopper motor power (negative spins clockwise)
         } else {
             intake.setPower(0); //turn off intake motor
         }
-
         return hp;
     }
+
     private void controlFlipper() {
         // Lift ball into Shooter using Flipper
         if (gamepad1.dpad_up) {
@@ -379,6 +440,7 @@ public class Testing_Luke extends LinearOpMode {
         telemetry.addData("hood pos",hood.getPosition());
         return lastDownArrow;
     }
+
     private boolean hood_up (boolean lastUpArrow) {
         //resetting odometry positions and heading
         boolean currUpArrow = (gamepad1.dpad_up) ;
@@ -390,5 +452,4 @@ public class Testing_Luke extends LinearOpMode {
         telemetry.addData("hood pos",hood.getPosition());
         return lastUpArrow;
     }
-
 }
