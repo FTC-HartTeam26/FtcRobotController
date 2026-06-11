@@ -47,9 +47,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 @TeleOp(name="Testing_Desmond_v2", group="TeleOpModes")
 public class Testing_Desmond_v2 extends LinearOpMode {
     private Limelight3A limelight;
-    private double CAMERA_HEIGHT_IN = 12.625;
-    private double CAMERA_ANGLE = 20;
-    private double GOAL_HEIGHT = 29.5;
     private double distance = 0;
     private IMU imu;
 
@@ -124,7 +121,10 @@ public class Testing_Desmond_v2 extends LinearOpMode {
 
     public double getDistance(double ty){
         //limelight distance calculations
-        double angleToTarget = CAMERA_ANGLE  + ty;
+        double CAMERA_ANGLE = 20;
+        double angleToTarget = CAMERA_ANGLE + ty;
+        double CAMERA_HEIGHT_IN = 12.625;
+        double GOAL_HEIGHT = 29.5;
         double heightDifference = GOAL_HEIGHT - CAMERA_HEIGHT_IN;
         return  heightDifference / Math.tan(Math.toRadians(angleToTarget));
     }

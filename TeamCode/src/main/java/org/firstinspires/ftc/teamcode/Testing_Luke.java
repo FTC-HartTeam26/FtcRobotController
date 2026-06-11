@@ -1,14 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -37,6 +42,9 @@ public class Testing_Luke extends LinearOpMode {
     private Servo hood;
     double oldTime = 0; //used to calculate loop frequency
     private int TimesInPos = 0;
+    private double distance = 0;
+    private IMU imu;
+    private boolean facingTarget = false;
 
     //This is the main method. It runs when you press INIT on the Driver Hub
     //This method also contains the main loop
@@ -48,7 +56,7 @@ public class Testing_Luke extends LinearOpMode {
         configureOdometry();
         //initializeHopper(); //FIXME: UNCOMMENT WHEN DISTANCE SENSOR FIXED
         configureHopperEncoder();
-        configureLimeLight(8);
+        initializeLimelight(8);
 
         // variables that need to persist for multiple loop cycles
         boolean down_already_pressed = false; //used to store down button status
@@ -62,6 +70,8 @@ public class Testing_Luke extends LinearOpMode {
         // Main loop
         // this is what runs after you press Start, doesn't stop looping until you press Stop
         while (opModeIsActive()) {
+            double robotHeading = getRobotHeading();
+            facingTarget = Math.abs(1- robotHeading) <= 1;
 
             //this method returns the results of the ball color sensor
             String ballColor;
@@ -87,12 +97,16 @@ public class Testing_Luke extends LinearOpMode {
             //this method sets shooter motors power and returns hopper power
             double hp_shooter = 0;//hopper power for aligning ball to flipper
             if (gamepad1.b) {
-                hp_shooter = shootBall_far(ball_in_position);
-            }
-            else if (gamepad1.right_bumper) {
                 hp_shooter = shootBall_near(ball_in_position);
             }
-
+            else if (gamepad1.right_bumper) {
+                hp_shooter = shootBall_far(ball_in_position);
+            }
+            else {
+                shooter_right.setPower(0);
+                shooter_left.setPower(0);
+                hp_shooter = 0;
+            }
             //this method sets intake motors and returns hopper power
             double hp_intake; //hopper power for ball intake
             hp_intake =  controlIntake();
@@ -113,8 +127,7 @@ public class Testing_Luke extends LinearOpMode {
             hopper.setPower(Math.min(hp_intake, hp_shooter));
 
             //FIXME: DELETE THIS CODE AFTER TESTING
-            telemetry.addData("Ball Color", ballColor);
-            telemetry.addData("Test Sensor", ballColor_Test);
+            telemetry.addData("LimeLight Heading", robotHeading);
             String ballDist = String.format("%.2f", distanceSensor.getDistance(DistanceUnit.CM));
             String distBaseline = String.format("%.2f", distanceSensorTest.getDistance(DistanceUnit.CM));
             telemetry.addData("Ball Dist", ballDist);
@@ -274,7 +287,13 @@ public class Testing_Luke extends LinearOpMode {
         lastDownArrow = currDownArrow;
         return lastDownArrow;
     }
-
+    private double getRobotHeading(){
+        //Get data from Limelight
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult llResult = limelight.getLatestResult();
+        return llResult.getTx();
+    }
     private double shootBall_near(boolean ball_is_ready) {
         double hopperPower = 0;
         double shootPower_r = 0;
@@ -320,10 +339,12 @@ public class Testing_Luke extends LinearOpMode {
         double hopperPower = 0;
         double shootPower_r = 0;
         double shootPower_l = 0;
-
+        boolean RobotInPos;
 
         if (gamepad1.right_bumper) {
-
+            if(!facingTarget){
+                //FIXME put turn code until 0 degrees here
+            }
             shootPower_r = -0.95;
             shootPower_l = 0.95;
             shooter_right.setPower(shootPower_r);
@@ -352,6 +373,7 @@ public class Testing_Luke extends LinearOpMode {
             shooter_right.setPower(0);
             shooter_left.setPower(0);
             TimesInPos = 0;
+
         }
         return hopperPower;
 
@@ -451,5 +473,27 @@ public class Testing_Luke extends LinearOpMode {
         lastUpArrow = currUpArrow;
         telemetry.addData("hood pos",hood.getPosition());
         return lastUpArrow;
+    }
+
+    public double getDistance(double ty){
+        //limelight distance calculations
+        double CAMERA_ANGLE = 20;
+        double angleToTarget = CAMERA_ANGLE + ty;
+        double CAMERA_HEIGHT_IN = 12.625;
+        double GOAL_HEIGHT = 29.5;
+        double heightDifference = GOAL_HEIGHT - CAMERA_HEIGHT_IN;
+        return  heightDifference / Math.tan(Math.toRadians(angleToTarget));
+    }
+    private void initializeLimelight(int pipelineNo){
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.pipelineSwitch(pipelineNo);
+        imu = hardwareMap.get(IMU.class, "imu");
+        RevHubOrientationOnRobot revHubOrientationOnRobot =
+                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+                );
+        imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
+        imu.resetYaw();
+        limelight.start();
     }
 }
