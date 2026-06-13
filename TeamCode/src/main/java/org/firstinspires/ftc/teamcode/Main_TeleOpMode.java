@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -35,6 +37,7 @@ public class Main_TeleOpMode extends LinearOpMode {
   private NormalizedColorSensor colorSensorTest; //FIXME: DELETE AFTER TESTING
   private DistanceSensor distanceSensorTest; //FIXME: DELETE AFTER TESTING
   private Servo hood;
+  private IMU imu;
   double oldTime = 0; //used to calculate loop frequency
   private int TimesInPos = 0;
 
@@ -86,7 +89,16 @@ public class Main_TeleOpMode extends LinearOpMode {
 
       //this method sets shooter motors power and returns hopper power
       double hp_shooter; //hopper power for aligning ball to flipper
-      hp_shooter = shootBall(ball_in_position);
+      if (gamepad1.right_bumper) {
+        hp_shooter = shootBall_far(ball_in_position);
+      } else if (gamepad1.a) {
+        hp_shooter = shootBall_near(ball_in_position);
+      } else {
+        shooter_right.setPower(0);
+        shooter_left.setPower(0);
+        TimesInPos = 0;
+        hp_shooter = 0;
+      }
 
       //this method sets intake motors and returns hopper power
       double hp_intake; //hopper power for ball intake
@@ -165,6 +177,16 @@ public class Main_TeleOpMode extends LinearOpMode {
 
   private void configureLimeLight(int pipeLine) {
     limelight.pipelineSwitch(pipeLine);
+
+    imu = hardwareMap.get(IMU.class, "imu");
+    RevHubOrientationOnRobot revHubOrientationOnRobot =
+            new RevHubOrientationOnRobot(
+                    RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                    RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+            );
+    imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
+    imu.resetYaw();
+
     limelight.start();
   }
 
@@ -270,42 +292,62 @@ public class Main_TeleOpMode extends LinearOpMode {
     return lastDownArrow;
   }
 
-  private double shootBall(boolean ball_is_ready) {
+  private double shootBall_near(boolean ball_is_ready) {
     double hopperPower = 0;
-    double shootPower_r = 0;
-    double shootPower_l = 0;
+    double shootPower_r = -0.6;
+    double shootPower_l = 0.6;
 
+    hood.setPosition(1.0);
+    shooter_right.setPower(shootPower_r);
+    shooter_left.setPower(shootPower_l);
 
-    if (gamepad1.a) {
+    if (!ball_is_ready) {
+      hopperPower = -0.15;
+    } else {
+      TimesInPos += 1;
+      hopper.setPower(0);
 
-      shootPower_r = -0.6;
-      shootPower_l = 0.6;
-      shooter_right.setPower(shootPower_r);
-      shooter_left.setPower(shootPower_l);
-
-      if (!ball_is_ready) {
-        hopperPower = -0.15;
-      } else {
-        TimesInPos += 1;
-        hopper.setPower(0);
-
-        if(TimesInPos == 1){
-          sleep(1300);
-        }
-        flipper.setPosition(0.2);
-
-        sleep(500);
-        flipper.setPosition(0.7);
-
-        sleep(900);
-        hopper.setPower(-0.15);
-        sleep(150);
+      if(TimesInPos == 1){
+        sleep(1700);
       }
+      flipper.setPosition(0.2);
+
+      sleep(500);
+      flipper.setPosition(0.7);
+
+      sleep(900);
+      hopper.setPower(-0.15);
+      sleep(150);
     }
-    else {
-      shooter_right.setPower(0);
-      shooter_left.setPower(0);
-      TimesInPos = 0;
+    return hopperPower;
+  }
+
+  private double shootBall_far(boolean ball_is_ready) {
+    double hopperPower = 0;
+    double shootPower_r = -0.95;
+    double shootPower_l = 0.95;
+
+    hood.setPosition(0.0);
+    shooter_right.setPower(shootPower_r);
+    shooter_left.setPower(shootPower_l);
+
+    if (!ball_is_ready) {
+      hopperPower = -0.15;
+    } else {
+      TimesInPos += 1;
+      hopper.setPower(0);
+
+      if(TimesInPos == 1){
+        sleep(1700);
+      }
+      flipper.setPosition(0.2);
+
+      sleep(500);
+      flipper.setPosition(0.7);
+
+      sleep(900);
+      hopper.setPower(-0.15);
+      sleep(150);
     }
     return hopperPower;
   }
