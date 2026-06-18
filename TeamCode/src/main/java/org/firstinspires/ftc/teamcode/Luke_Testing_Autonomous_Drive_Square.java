@@ -8,7 +8,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @Autonomous(name="Auto_Drive_Square", group="AutoMode")
-public class Autonomous_Drive_Square extends LinearOpMode {
+public class Luke_Testing_Autonomous_Drive_Square extends LinearOpMode {
     private DcMotor back_left;
     private DcMotor front_left;
     private DcMotor front_right;
@@ -28,6 +28,8 @@ public class Autonomous_Drive_Square extends LinearOpMode {
 
         driveToPosition_Relative(304.8); // using MM, i.e. 12 inches = 304.8 mm
 
+        
+
         rotate_Relative(90);
         driveToPosition_Relative(304.8);
 
@@ -38,7 +40,7 @@ public class Autonomous_Drive_Square extends LinearOpMode {
         driveToPosition_Relative(304.8);
     }
     private void driveToPosition_Relative(double dist) {
-        double margin_of_error = 5.0; // update error margin as needed
+        double margin_of_error = 10.0; // update error margin as needed
         double drivePower = 0.5; // update drive power as needed
 
         // Record exact starting coordinates

@@ -63,6 +63,19 @@ public class Main_Autonomous extends LinearOpMode {
                 driveRobot(0.3, 0, -0.2);
                 sleep(2000);
                 driveRobot(0,0,0);
+                ballShotCount = 4;
+                sleep(500);
+            }
+            if (ballShotCount ==4) {
+                ball_in_position =  readyToLiftBall();
+                if (!ball_in_position) {
+                    hopper.setPower(-0.12);
+                } else {
+                    hopper.setPower(0);
+                    ballShotCount = 5;
+                }
+            }
+            if (ballShotCount == 5) {
                 return;
             }
         }
@@ -205,8 +218,8 @@ public class Main_Autonomous extends LinearOpMode {
 
         if (ballShotCount < 3) {
 
-            shootPower_r = -0.7;
-            shootPower_l = 0.7;
+            shootPower_r = -0.6;
+            shootPower_l = 0.6;
             shooter_right.setPower(shootPower_r);
             shooter_left.setPower(shootPower_l);
 
