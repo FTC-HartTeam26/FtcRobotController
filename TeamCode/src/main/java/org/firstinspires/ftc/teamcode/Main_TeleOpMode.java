@@ -40,7 +40,10 @@ public class Main_TeleOpMode extends LinearOpMode {
   private IMU imu;
   double oldTime = 0; //used to calculate loop frequency
   private int TimesInPos = 0;
-
+  boolean robot_facing_goal;
+  boolean ball_in_position;
+  double DirectionOfRobot;
+  boolean IsTargetValid;
   //This is the main method. It runs when you press INIT on the Driver Hub
   //This method also contains the main loop
   @Override
@@ -76,8 +79,11 @@ public class Main_TeleOpMode extends LinearOpMode {
       ballColor_Test = getBallColor(colorSensorTest);
 
       //this method returns whether the ball is in shooting position
-      boolean ball_in_position = false; //reset ball in position variable
+      ball_in_position = false; //reset ball in position variable
       ball_in_position =  readyToLiftBall();
+
+      robot_facing_goal = false;
+      robot_facing_goal = isRobotFacingTarget();
 
       //this method sets the power of drive motors
       driveRobot();
@@ -90,9 +96,9 @@ public class Main_TeleOpMode extends LinearOpMode {
       //this method sets shooter motors power and returns hopper power
       double hp_shooter; //hopper power for aligning ball to flipper
       if (gamepad1.right_bumper) {
-        hp_shooter = shootBall_far(ball_in_position);
+        hp_shooter = shootBall_far();
       } else if (gamepad1.a) {
-        hp_shooter = shootBall_near(ball_in_position);
+        hp_shooter = shootBall_near();
       } else {
         shooter_right.setPower(0);
         shooter_left.setPower(0);
@@ -246,6 +252,7 @@ public class Main_TeleOpMode extends LinearOpMode {
 
     //check if ball is in any of the shooting positions, set ball_in_pos accordingly
     boolean ballInPos = false;
+
     if (check_pos1 <= ERROR_MARGIN) {
       ballInPos = true;
     } else if (check_pos2 <= ERROR_MARGIN) {
@@ -292,7 +299,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     return lastDownArrow;
   }
 
-  private double shootBall_near(boolean ball_is_ready) {
+  private double shootBall_near() {
     double hopperPower = 0;
     double shootPower_r = -0.6;
     double shootPower_l = 0.6;
@@ -301,7 +308,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     shooter_right.setPower(shootPower_r);
     shooter_left.setPower(shootPower_l);
 
-    if (!ball_is_ready) {
+    if (!ball_in_position) {
       hopperPower = -0.15;
     } else {
       TimesInPos += 1;
@@ -322,7 +329,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     return hopperPower;
   }
 
-  private double shootBall_far(boolean ball_is_ready) {
+  private double shootBall_far() {
     double hopperPower = 0;
     double shootPower_r = -0.95;
     double shootPower_l = 0.95;
@@ -331,8 +338,28 @@ public class Main_TeleOpMode extends LinearOpMode {
     shooter_right.setPower(shootPower_r);
     shooter_left.setPower(shootPower_l);
 
-    if (!ball_is_ready) {
-      hopperPower = -0.15;
+    boolean BallAndRobot_in_pos = false;
+      if (ball_in_position == true && robot_facing_goal == true){
+        BallAndRobot_in_pos = true;
+      }
+
+
+    if (!BallAndRobot_in_pos) {
+      if (!ball_in_position)  {
+        hopperPower = -0.15;
+      }
+      if (!robot_facing_goal || (!IsTargetValid)) {
+        back_left.setPower(-0.3);
+        back_right.setPower(0.3);
+        front_left.setPower(-0.3);
+        front_right.setPower(0.3);
+      }
+      else {
+        back_left.setPower(0);
+        back_right.setPower(0);
+        front_left.setPower(0);
+        front_right.setPower(0);
+      }
     } else {
       TimesInPos += 1;
       hopper.setPower(0);
@@ -447,4 +474,16 @@ public class Main_TeleOpMode extends LinearOpMode {
     telemetry.addData("hood pos",hood.getPosition());
     return lastUpArrow;
   }
-}
+
+  private boolean isRobotFacingTarget () {
+
+
+      LLResult result = limelight.getLatestResult();
+      DirectionOfRobot = result.getTx();
+      IsTargetValid = result.isValid();
+      return DirectionOfRobot >= -1.0 && DirectionOfRobot <= 1.0;
+
+
+    }
+
+  }
