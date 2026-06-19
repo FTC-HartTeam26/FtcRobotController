@@ -171,6 +171,7 @@ public class Main_Autonomous extends LinearOpMode {
         colorSensorTest = hardwareMap.get(NormalizedColorSensor.class, "test_color_sensor");
         distanceSensorTest = hardwareMap.get(DistanceSensor.class, "test_color_sensor");
         hood = hardwareMap.get(Servo.class, "hood");
+        hood.setPosition(0.8);
     }
     private void configureDriveMotors() {
         //set up drive motor directions
@@ -215,7 +216,7 @@ public class Main_Autonomous extends LinearOpMode {
         double shootPower_r = 0;
         double shootPower_l = 0;
 
-
+        boolean ballReady = readyToLiftBall();
         if (ballShotCount < 3) {
 
             shootPower_r = -0.6;
@@ -223,8 +224,8 @@ public class Main_Autonomous extends LinearOpMode {
             shooter_right.setPower(shootPower_r);
             shooter_left.setPower(shootPower_l);
 
-            if (!ball_is_ready) {
-                hopperPower = -0.12;
+            if (!ballReady) {
+                hopperPower = -0.08;
             } else {
                 hopper.setPower(0);
                 sleep(1000);

@@ -69,21 +69,9 @@ public class Main_TeleOpMode extends LinearOpMode {
     // this is what runs after you press Start, doesn't stop looping until you press Stop
     while (opModeIsActive()) {
 
-      //this method returns the results of the ball color sensor
-      String ballColor;
-      ballColor = getBallColor(colorSensor);
-
-      //FIXME: delete this section after testing is complete
-      //this method returns the value of the test color sensor
-      String ballColor_Test;
-      ballColor_Test = getBallColor(colorSensorTest);
-
       //this method returns whether the ball is in shooting position
       ball_in_position = false; //reset ball in position variable
       ball_in_position =  readyToLiftBall();
-
-      robot_facing_goal = false;
-      robot_facing_goal = isRobotFacingTarget();
 
       //this method sets the power of drive motors
       driveRobot();
@@ -125,13 +113,6 @@ public class Main_TeleOpMode extends LinearOpMode {
       //set hopper motor power if required by shooter or intake
       hopper.setPower(Math.min(hp_intake, hp_shooter));
 
-      //FIXME: DELETE THIS CODE AFTER TESTING
-      telemetry.addData("Ball Color", ballColor);
-      telemetry.addData("Test Sensor", ballColor_Test);
-      String ballDist = String.format("%.2f", distanceSensor.getDistance(DistanceUnit.CM));
-      String distBaseline = String.format("%.2f", distanceSensorTest.getDistance(DistanceUnit.CM));
-      telemetry.addData("Ball Dist", ballDist);
-      telemetry.addData("Dist Baseline", distBaseline);
       telemetry.update();
     }
   }
@@ -147,6 +128,7 @@ public class Main_TeleOpMode extends LinearOpMode {
     shooter_left = hardwareMap.get(DcMotor.class, "shooter_left");
     hopper = hardwareMap.get(CRServo.class, "hopper");
     flipper = hardwareMap.get(Servo.class, "flipper");
+    flipper.setPosition(0.7);
     odometryComputer = hardwareMap.get(GoBildaPinpointDriver.class, "odometry");
     hopper_encoder = hardwareMap.get(DcMotor.class, "hopper_encoder");
     distanceSensor = hardwareMap.get(DistanceSensor.class, "ball_color_sensor");
@@ -338,36 +320,34 @@ public class Main_TeleOpMode extends LinearOpMode {
     shooter_right.setPower(shootPower_r);
     shooter_left.setPower(shootPower_l);
 
-    boolean BallAndRobot_in_pos = false;
-      if (ball_in_position == true && robot_facing_goal == true){
-        BallAndRobot_in_pos = true;
-      }
+    robot_facing_goal = isRobotFacingTarget();
 
-
-    if (!BallAndRobot_in_pos) {
-      if (!ball_in_position)  {
-        hopperPower = -0.15;
-      }
-      if (!robot_facing_goal || (!IsTargetValid)) {
-        back_left.setPower(-0.3);
-        back_right.setPower(0.3);
-        front_left.setPower(-0.3);
-        front_right.setPower(0.3);
-      }
-      else {
-        back_left.setPower(0);
-        back_right.setPower(0);
-        front_left.setPower(0);
-        front_right.setPower(0);
-      }
+    if (!robot_facing_goal) {
+      back_left.setPower(-0.2);
+      back_right.setPower(0.2);
+      front_left.setPower(-0.2);
+      front_right.setPower(0.2);
     } else {
+      back_left.setPower(0);
+      back_right.setPower(0);
+      front_left.setPower(0);
+      front_right.setPower(0);
+    }
+
+    if (!ball_in_position) {
+      hopperPower = -0.15;
+    } else {
+      hopperPower = 0.0;
+    }
+
+    if (robot_facing_goal && ball_in_position) {
       TimesInPos += 1;
       hopper.setPower(0);
 
       if(TimesInPos == 1){
         sleep(1700);
       }
-      flipper.setPosition(0.2);
+      flipper.setPosition(0.3);
 
       sleep(500);
       flipper.setPosition(0.7);
@@ -475,15 +455,20 @@ public class Main_TeleOpMode extends LinearOpMode {
     return lastUpArrow;
   }
 
-  private boolean isRobotFacingTarget () {
-
-
+    private boolean isRobotFacingTarget () {
       LLResult result = limelight.getLatestResult();
-      DirectionOfRobot = result.getTx();
+      if (result == null) {
+        DirectionOfRobot = 999;
+        IsTargetValid = false;
+        return false;
+      }
       IsTargetValid = result.isValid();
-      return DirectionOfRobot >= -1.0 && DirectionOfRobot <= 1.0;
-
-
+      if (!IsTargetValid) {
+        DirectionOfRobot = 999;
+        return false;
+      }
+      DirectionOfRobot = result.getTx();
+      return DirectionOfRobot >= -2.0 && DirectionOfRobot <= 2.0;
     }
 
-  }
+}
